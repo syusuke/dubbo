@@ -26,6 +26,8 @@ import java.util.List;
 /**
  * AbstractServiceConfig
  *
+ * https://dubbo.gitbooks.io/dubbo-user-book/references/xml/dubbo-provider.html
+ *
  * @export
  */
 public abstract class AbstractServiceConfig extends AbstractInterfaceConfig {

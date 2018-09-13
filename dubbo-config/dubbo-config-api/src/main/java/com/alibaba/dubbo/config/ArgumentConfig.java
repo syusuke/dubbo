@@ -21,6 +21,8 @@ import com.alibaba.dubbo.config.support.Parameter;
 import java.io.Serializable;
 
 /**
+ * https://dubbo.gitbooks.io/dubbo-user-book/references/xml/dubbo-argument.html
+ *
  * @export
  */
 public class ArgumentConfig implements Serializable {

@@ -23,6 +23,9 @@ import java.util.List;
 
 /**
  * ModuleConfig
+ * <p>
+ * <p>
+ * https://dubbo.gitbooks.io/dubbo-user-book/references/xml/dubbo-module.html
  *
  * @export
  */

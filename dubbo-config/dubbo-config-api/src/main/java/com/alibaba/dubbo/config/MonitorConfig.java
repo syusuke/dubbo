@@ -22,6 +22,9 @@ import java.util.Map;
 
 /**
  * MonitorConfig
+ * <p>
+ * <p>
+ * https://dubbo.gitbooks.io/dubbo-user-book/references/xml/dubbo-monitor.html
  *
  * @export
  */
@@ -125,11 +128,11 @@ public class MonitorConfig extends AbstractConfig {
         this.isDefault = isDefault;
     }
 
-    public void setInterval(String interval){
+    public void setInterval(String interval) {
         this.interval = interval;
     }
 
-    public String getInterval(){
+    public String getInterval() {
         return interval;
     }
 

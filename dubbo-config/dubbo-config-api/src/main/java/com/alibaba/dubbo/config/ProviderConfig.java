@@ -29,6 +29,8 @@ import java.util.Arrays;
 
 /**
  * ProviderConfig
+ * <p>
+ * https://dubbo.gitbooks.io/dubbo-user-book/references/xml/dubbo-provider.html
  *
  * @export
  * @see com.alibaba.dubbo.config.ProtocolConfig

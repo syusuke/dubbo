@@ -28,6 +28,9 @@ import java.util.Map;
 
 /**
  * ApplicationConfig
+ * <p>
+ * <p>
+ * https://dubbo.gitbooks.io/dubbo-user-book/references/xml/dubbo-application.html
  *
  * @export
  */

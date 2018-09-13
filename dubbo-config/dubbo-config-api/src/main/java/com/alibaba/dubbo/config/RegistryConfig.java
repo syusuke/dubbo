@@ -23,6 +23,9 @@ import java.util.Map;
 
 /**
  * RegistryConfig
+ * <p>
+ * <p>
+ * https://dubbo.gitbooks.io/dubbo-user-book/references/xml/dubbo-registry.html
  *
  * @export
  */

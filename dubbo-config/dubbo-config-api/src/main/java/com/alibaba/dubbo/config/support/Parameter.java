@@ -16,30 +16,68 @@
  */
 package com.alibaba.dubbo.config.support;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * Parameter
+ * <p>
+ * 用于 Dubbo {@link com.alibaba.dubbo.common.URL} 的参数拼接
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface Parameter {
 
+    /***
+     * Key
+     * @return
+     */
     String key() default "";
 
+    /**
+     * Must
+     *
+     * @return
+     */
     boolean required() default false;
 
+    /**
+     * 排除
+     *
+     * @return
+     */
     boolean excluded() default false;
 
+    /**
+     * 转义
+     *
+     * @return
+     */
     boolean escaped() default false;
 
+    /**
+     * 是否是属性
+     * 目前用于《事件通知》http://dubbo.io/books/dubbo-user-book/demos/events-notify.html
+     *
+     * @return
+     */
     boolean attribute() default false;
 
+    /**
+     * 是否拼接默认属性，。
+     * <p>
+     * 我们来看看 `#append() = true` 的属性，有如下四个：
+
+     * 那么，以 AbstractServiceConfig 举例子。
+     * <p>
+     * 我们知道 ProviderConfig 和 ServiceConfig 继承 AbstractServiceConfig 类，那么 `filter` , `listener` 对应的相同的键。
+     * 下面我们以 `filter` 举例子。
+     * <p>
+     * 在 ServiceConfig 中，默认会<b>继承</b> ProviderConfig 配置的 `filter` 和 `listener` 。
+     * 所以这个属性，就是用于，像 ServiceConfig 的这种情况，从 ProviderConfig 读取父属性。
+     * <p>
+     * 举个例子，如果 `ProviderConfig.filter=aaaFilter` ，`ServiceConfig.filter=bbbFilter` ，最终暴露到 Dubbo URL 时，参数为 `service.filter=aaaFilter,bbbFilter` 。
+     */
     boolean append() default false;
 
 }
