@@ -36,11 +36,10 @@ public class JVMUtil {
                 " Id=" + threadInfo.getThreadId() + " " +
                 threadInfo.getThreadState());
         if (threadInfo.getLockName() != null) {
-            sb.append(" on " + threadInfo.getLockName());
+            sb.append(" on ").append(threadInfo.getLockName());
         }
         if (threadInfo.getLockOwnerName() != null) {
-            sb.append(" owned by \"" + threadInfo.getLockOwnerName() +
-                    "\" Id=" + threadInfo.getLockOwnerId());
+            sb.append(" owned by \"").append(threadInfo.getLockOwnerName()).append("\" Id=").append(threadInfo.getLockOwnerId());
         }
         if (threadInfo.isSuspended()) {
             sb.append(" (suspended)");
@@ -55,7 +54,7 @@ public class JVMUtil {
         MonitorInfo[] lockedMonitors = threadInfo.getLockedMonitors();
         for (; i < stackTrace.length && i < 32; i++) {
             StackTraceElement ste = stackTrace[i];
-            sb.append("\tat " + ste.toString());
+            sb.append("\tat ").append(ste.toString());
             sb.append('\n');
             if (i == 0 && threadInfo.getLockInfo() != null) {
                 Thread.State ts = threadInfo.getThreadState();

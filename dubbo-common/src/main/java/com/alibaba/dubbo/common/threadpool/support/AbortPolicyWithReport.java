@@ -35,6 +35,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 /**
  * Abort Policy.
  * Log warn info when abort.
+ * <p>
+ * 线程池拒绝策略
  */
 public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
 
@@ -53,6 +55,12 @@ public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
         this.url = url;
     }
 
+    /**
+     * 线程池拒绝策略
+     *
+     * @param r
+     * @param e
+     */
     @Override
     public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
         String msg = String.format("Thread pool is EXHAUSTED!" +
@@ -63,9 +71,13 @@ public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
                 url.getProtocol(), url.getIp(), url.getPort());
         logger.warn(msg);
         dumpJStack();
+        // 抛出 RejectedExecutionException 异常
         throw new RejectedExecutionException(msg);
     }
 
+    /**
+     * 打印信息
+     */
     private void dumpJStack() {
         long now = System.currentTimeMillis();
 
@@ -88,9 +100,9 @@ public class AbortPolicyWithReport extends ThreadPoolExecutor.AbortPolicy {
                 String OS = System.getProperty("os.name").toLowerCase();
 
                 // window system don't support ":" in file name
-                if(OS.contains("win")){
+                if (OS.contains("win")) {
                     sdf = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-                }else {
+                } else {
                     sdf = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
                 }
 

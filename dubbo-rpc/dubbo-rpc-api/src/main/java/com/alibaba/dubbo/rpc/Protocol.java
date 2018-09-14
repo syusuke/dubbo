@@ -34,6 +34,7 @@ public interface Protocol {
     int getDefaultPort();
 
     /**
+     * 暴露远程服务
      * Export service for remote invocation: <br>
      * 1. Protocol should record request source address after receive a request:
      * RpcContext.getContext().setRemoteAddress();<br>

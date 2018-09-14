@@ -30,15 +30,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
@@ -78,10 +70,16 @@ public class ExtensionLoader<T> {
 
     private final ExtensionFactory objectFactory;
 
+    /**
+     * 缓存的拓展名与拓展类的映射。
+     */
     private final ConcurrentMap<Class<?>, String> cachedNames = new ConcurrentHashMap<Class<?>, String>();
 
     private final Holder<Map<String, Class<?>>> cachedClasses = new Holder<Map<String, Class<?>>>();
 
+    /**
+     * 拓展名与 @Activate 的映射
+     */
     private final Map<String, Activate> cachedActivates = new ConcurrentHashMap<String, Activate>();
     private final ConcurrentMap<String, Holder<Object>> cachedInstances = new ConcurrentHashMap<String, Holder<Object>>();
     private final Holder<Object> cachedAdaptiveInstance = new Holder<Object>();
@@ -95,25 +93,42 @@ public class ExtensionLoader<T> {
 
     private ExtensionLoader(Class<?> type) {
         this.type = type;
+        // 初始化 ExtensionFactory
         objectFactory = (type == ExtensionFactory.class ? null : ExtensionLoader.getExtensionLoader(ExtensionFactory.class).getAdaptiveExtension());
     }
 
+    /**
+     * 检验 @SPI 注解修饰
+     *
+     * @param type
+     * @param <T>
+     * @return
+     */
     private static <T> boolean withExtensionAnnotation(Class<T> type) {
         return type.isAnnotationPresent(SPI.class);
     }
 
+    /**
+     * 根据拓展点的接口，获得拓展加载器
+     *
+     * @param type
+     * @param <T>
+     * @return
+     */
     @SuppressWarnings("unchecked")
     public static <T> ExtensionLoader<T> getExtensionLoader(Class<T> type) {
         if (type == null)
             throw new IllegalArgumentException("Extension type == null");
+        //接口
         if (!type.isInterface()) {
             throw new IllegalArgumentException("Extension type(" + type + ") is not interface!");
         }
+        //@SPI
         if (!withExtensionAnnotation(type)) {
             throw new IllegalArgumentException("Extension type(" + type +
                     ") is not extension, because WITHOUT @" + SPI.class.getSimpleName() + " Annotation!");
         }
-
+        // 获得接口对应的拓展点加载器
         ExtensionLoader<T> loader = (ExtensionLoader<T>) EXTENSION_LOADERS.get(type);
         if (loader == null) {
             EXTENSION_LOADERS.putIfAbsent(type, new ExtensionLoader<T>(type));
@@ -159,6 +174,8 @@ public class ExtensionLoader<T> {
     }
 
     /**
+     * 获得符合自动激活条件的拓展对象数组
+     * <p>
      * This is equivalent to {@code getActivateExtension(url, url.getParameter(key).split(","), null)}
      *
      * @param url   url
@@ -168,7 +185,9 @@ public class ExtensionLoader<T> {
      * @see #getActivateExtension(com.alibaba.dubbo.common.URL, String[], String)
      */
     public List<T> getActivateExtension(URL url, String key, String group) {
+        // 从 Dubbo URL 获得参数值
         String value = url.getParameter(key);
+        // 获得符合自动激活条件的拓展对象数组
         return getActivateExtension(url, value == null || value.length() == 0 ? null : Constants.COMMA_SPLIT_PATTERN.split(value), group);
     }
 
@@ -293,6 +312,7 @@ public class ExtensionLoader<T> {
     public T getExtension(String name) {
         if (name == null || name.length() == 0)
             throw new IllegalArgumentException("Extension name == null");
+        // 查找 默认的 拓展对象
         if ("true".equals(name)) {
             return getDefaultExtension();
         }
@@ -432,10 +452,17 @@ public class ExtensionLoader<T> {
         }
     }
 
+    /**
+     * 获得自适应拓展对象
+     *
+     * @return
+     */
     @SuppressWarnings("unchecked")
     public T getAdaptiveExtension() {
         Object instance = cachedAdaptiveInstance.get();
+        // 从缓存中，获得自适应拓展对象
         if (instance == null) {
+            // 若之前未创建报错，
             if (createAdaptiveInstanceError == null) {
                 synchronized (cachedAdaptiveInstance) {
                     instance = cachedAdaptiveInstance.get();
@@ -482,6 +509,12 @@ public class ExtensionLoader<T> {
         return new IllegalStateException(buf.toString());
     }
 
+    /**
+     * 创建拓展名的拓展对象，并缓存
+     *
+     * @param name
+     * @return
+     */
     @SuppressWarnings("unchecked")
     private T createExtension(String name) {
         Class<?> clazz = getExtensionClasses().get(name);
@@ -494,6 +527,7 @@ public class ExtensionLoader<T> {
                 EXTENSION_INSTANCES.putIfAbsent(clazz, clazz.newInstance());
                 instance = (T) EXTENSION_INSTANCES.get(clazz);
             }
+            // 注入依赖的属性
             injectExtension(instance);
             Set<Class<?>> wrapperClasses = cachedWrapperClasses;
             if (wrapperClasses != null && !wrapperClasses.isEmpty()) {
@@ -512,6 +546,7 @@ public class ExtensionLoader<T> {
         try {
             if (objectFactory != null) {
                 for (Method method : instance.getClass().getMethods()) {
+                    // setXXX()
                     if (method.getName().startsWith("set")
                             && method.getParameterTypes().length == 1
                             && Modifier.isPublic(method.getModifiers())) {
@@ -520,6 +555,7 @@ public class ExtensionLoader<T> {
                             String property = method.getName().length() > 3 ? method.getName().substring(3, 4).toLowerCase() + method.getName().substring(4) : "";
                             Object object = objectFactory.getExtension(pt, property);
                             if (object != null) {
+                                //执行方法
                                 method.invoke(instance, object);
                             }
                         } catch (Exception e) {
@@ -546,12 +582,19 @@ public class ExtensionLoader<T> {
         return clazz;
     }
 
+    /**
+     * 获得拓展实现类数组
+     *
+     * @return
+     */
     private Map<String, Class<?>> getExtensionClasses() {
+        // 从缓存中，获得拓展实现类数组
         Map<String, Class<?>> classes = cachedClasses.get();
         if (classes == null) {
             synchronized (cachedClasses) {
                 classes = cachedClasses.get();
                 if (classes == null) {
+                    // 从配置文件中，加载拓展实现类数组
                     classes = loadExtensionClasses();
                     cachedClasses.set(classes);
                 }
@@ -576,12 +619,19 @@ public class ExtensionLoader<T> {
         }
 
         Map<String, Class<?>> extensionClasses = new HashMap<String, Class<?>>();
+        // 从配置文件中，加载拓展实现类数组
         loadDirectory(extensionClasses, DUBBO_INTERNAL_DIRECTORY);
         loadDirectory(extensionClasses, DUBBO_DIRECTORY);
         loadDirectory(extensionClasses, SERVICES_DIRECTORY);
         return extensionClasses;
     }
 
+    /**
+     * 加载文件
+     *
+     * @param extensionClasses
+     * @param dir
+     */
     private void loadDirectory(Map<String, Class<?>> extensionClasses, String dir) {
         String fileName = dir + type.getName();
         try {
@@ -728,13 +778,25 @@ public class ExtensionLoader<T> {
         return cachedAdaptiveClass = createAdaptiveExtensionClass();
     }
 
+    /**
+     * 自动生成自适应拓展的代码实现，并编译后返回该类。
+     *
+     * @return
+     */
     private Class<?> createAdaptiveExtensionClass() {
+        // // 自动生成自适应拓展的代码实现的字符串
         String code = createAdaptiveExtensionClassCode();
         ClassLoader classLoader = findClassLoader();
         com.alibaba.dubbo.common.compiler.Compiler compiler = ExtensionLoader.getExtensionLoader(com.alibaba.dubbo.common.compiler.Compiler.class).getAdaptiveExtension();
         return compiler.compile(code, classLoader);
     }
 
+
+    /**
+     * 自动生成自适应拓展的代码实现的字符串,生成字符串Java代码
+     *
+     * @return
+     */
     private String createAdaptiveExtensionClassCode() {
         StringBuilder codeBuilder = new StringBuilder();
         Method[] methods = type.getMethods();

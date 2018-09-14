@@ -25,6 +25,8 @@ import java.util.concurrent.Executor;
 
 /**
  * ThreadPool
+ * <p>
+ * 默认 fixed
  */
 @SPI("fixed")
 public interface ThreadPool {

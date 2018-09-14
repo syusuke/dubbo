@@ -42,6 +42,7 @@ public class CachedThreadPool implements ThreadPool {
         int cores = url.getParameter(Constants.CORE_THREADS_KEY, Constants.DEFAULT_CORE_THREADS);
         int threads = url.getParameter(Constants.THREADS_KEY, Integer.MAX_VALUE);
         int queues = url.getParameter(Constants.QUEUES_KEY, Constants.DEFAULT_QUEUES);
+        // 线程存活时长
         int alive = url.getParameter(Constants.ALIVE_KEY, Constants.DEFAULT_ALIVE);
         return new ThreadPoolExecutor(cores, threads, alive, TimeUnit.MILLISECONDS,
                 queues == 0 ? new SynchronousQueue<Runnable>() :
