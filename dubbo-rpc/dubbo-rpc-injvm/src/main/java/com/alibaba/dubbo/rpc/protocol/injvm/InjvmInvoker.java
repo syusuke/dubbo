@@ -44,6 +44,7 @@ class InjvmInvoker<T> extends AbstractInvoker<T> {
 
     @Override
     public boolean isAvailable() {
+        // 判断是否有 Exporter 对象
         InjvmExporter<?> exporter = (InjvmExporter<?>) exporterMap.get(key);
         if (exporter == null) {
             return false;

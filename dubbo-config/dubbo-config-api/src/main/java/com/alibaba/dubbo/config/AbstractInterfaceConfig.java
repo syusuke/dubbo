@@ -182,6 +182,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
         List<URL> registryList = new ArrayList<URL>();
         if (registries != null && !registries.isEmpty()) {
             for (RegistryConfig config : registries) {
+                // 获得注册中心的地址
                 String address = config.getAddress();
                 if (address == null || address.length() == 0) {
                     address = Constants.ANYHOST_VALUE;
@@ -190,6 +191,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                 if (sysaddress != null && sysaddress.length() > 0) {
                     address = sysaddress;
                 }
+                // "N/A"
                 if (address.length() > 0 && !RegistryConfig.NO_AVAILABLE.equalsIgnoreCase(address)) {
                     Map<String, String> map = new HashMap<String, String>();
                     appendParameters(map, application);

@@ -19,14 +19,17 @@ package com.alibaba.dubbo.common.utils;
 import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.URL;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class UrlUtils {
 
+    /**
+     * 解析单个URL
+     *
+     * @param address
+     * @param defaults
+     * @return
+     */
     public static URL parseURL(String address, Map<String, String> defaults) {
         if (address == null || address.length() == 0) {
             return null;

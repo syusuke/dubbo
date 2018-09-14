@@ -345,24 +345,31 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         final boolean isJvmRefer;
         if (isInjvm() == null) {
             if (url != null && url.length() > 0) { // if a url is specified, don't do local reference
+                //如果指定了url，则不要进行JVM引用
+                // 直连服务提供者，参见文档《直连提供者》https://dubbo.gitbooks.io/dubbo-user-book/demos/explicit-target.html
                 isJvmRefer = false;
             } else if (InjvmProtocol.getInjvmProtocol().isInjvmRefer(tmpUrl)) {
+                // injvm 服务 本地服务
                 // by default, reference local service if there is
                 isJvmRefer = true;
             } else {
+                //默认
                 isJvmRefer = false;
             }
         } else {
-            isJvmRefer = isInjvm().booleanValue();
+            // 通过 injvm 属性。
+            isJvmRefer = isInjvm();
         }
 
         if (isJvmRefer) {
+            // 本地引用
             URL url = new URL(Constants.LOCAL_PROTOCOL, NetUtils.LOCALHOST, 0, interfaceClass.getName()).addParameters(map);
             invoker = refprotocol.refer(interfaceClass, url);
             if (logger.isInfoEnabled()) {
                 logger.info("Using injvm service " + interfaceClass.getName());
             }
         } else {
+            // 正常流程，一般为远程引用
             if (url != null && url.length() > 0) { // user specified URL, could be peer-to-peer address, or register center's address.
                 String[] us = Constants.SEMICOLON_SPLIT_PATTERN.split(url);
                 if (us != null && us.length > 0) {
@@ -415,6 +422,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             }
         }
 
+        // 启动时是否检查
         Boolean c = check;
         if (c == null && consumer != null) {
             c = consumer.isCheck();
@@ -428,6 +436,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         if (logger.isInfoEnabled()) {
             logger.info("Refer dubbo service " + interfaceClass.getName() + " from url " + invoker.getUrl());
         }
+        // 创建 Service 代理对象
         // create service proxy
         return (T) proxyFactory.getProxy(invoker);
     }
