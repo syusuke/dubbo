@@ -22,16 +22,51 @@ import java.util.List;
 
 public interface ZookeeperClient {
 
+    /**
+     * 创建结点
+     *
+     * @param path
+     * @param ephemeral 是否是临时结点
+     */
     void create(String path, boolean ephemeral);
 
+    /**
+     * 删除结点
+     *
+     * @param path
+     */
     void delete(String path);
 
+    /**
+     * ChildListener
+     *
+     * @param path 节点路径
+     * @return
+     */
     List<String> getChildren(String path);
 
+    /**
+     * 添加 ChildListener
+     *
+     * @param path
+     * @param listener
+     * @return
+     */
     List<String> addChildListener(String path, ChildListener listener);
 
+    /**
+     * 移除ChildListener
+     *
+     * @param path
+     * @param listener
+     */
     void removeChildListener(String path, ChildListener listener);
 
+    /**
+     * 添加 StateListener
+     *
+     * @param listener
+     */
     void addStateListener(StateListener listener);
 
     void removeStateListener(StateListener listener);
@@ -40,6 +75,11 @@ public interface ZookeeperClient {
 
     void close();
 
+    /**
+     * 获得注册中心 URL
+     *
+     * @return
+     */
     URL getUrl();
 
 }
