@@ -23,42 +23,47 @@ import com.alibaba.dubbo.common.utils.ExecutorUtil;
 import com.alibaba.dubbo.common.utils.NamedThreadFactory;
 import com.alibaba.dubbo.registry.NotifyListener;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * FailbackRegistry. (SPI, Prototype, ThreadSafe)
- *
  */
 public abstract class FailbackRegistry extends AbstractRegistry {
 
+    /**
+     * 重试执行器
+     */
     // Scheduled executor service
     private final ScheduledExecutorService retryExecutor = Executors.newScheduledThreadPool(1, new NamedThreadFactory("DubboRegistryFailedRetryTimer", true));
 
+    /**
+     * 失败重试定时器，定时检查是否有请求失败，如有，无限次重试
+     */
     // Timer for failure retry, regular check if there is a request for failure, and if there is, an unlimited retry
     private final ScheduledFuture<?> retryFuture;
 
+    /**
+     * 失败发起注册失败的 URL 集合
+     */
     private final Set<URL> failedRegistered = new ConcurrentHashSet<URL>();
 
+    /**
+     * 失败取消注册失败的 URL 集合
+     */
     private final Set<URL> failedUnregistered = new ConcurrentHashSet<URL>();
 
     private final ConcurrentMap<URL, Set<NotifyListener>> failedSubscribed = new ConcurrentHashMap<URL, Set<NotifyListener>>();
 
     private final ConcurrentMap<URL, Set<NotifyListener>> failedUnsubscribed = new ConcurrentHashMap<URL, Set<NotifyListener>>();
 
+    /**
+     * 失败通知通知的 URL 集合
+     */
     private final ConcurrentMap<URL, Map<NotifyListener, List<URL>>> failedNotified = new ConcurrentHashMap<URL, Map<NotifyListener, List<URL>>>();
 
     /**
+     * 重试频率，单位：毫秒
      * The time in milliseconds the retryExecutor will wait
      */
     private final int retryPeriod;
@@ -71,6 +76,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
             public void run() {
                 // Check and connect to the registry
                 try {
+                    // 重试检查线程
                     retry();
                 } catch (Throwable t) { // Defensive fault tolerance
                     logger.error("Unexpected error occur at failed retry, cause: " + t.getMessage(), t);
@@ -310,6 +316,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
     // Retry the failed actions
     protected void retry() {
         if (!failedRegistered.isEmpty()) {
+            // 去重
             Set<URL> failed = new HashSet<URL>(failedRegistered);
             if (failed.size() > 0) {
                 if (logger.isInfoEnabled()) {
@@ -318,7 +325,9 @@ public abstract class FailbackRegistry extends AbstractRegistry {
                 try {
                     for (URL url : failed) {
                         try {
+                            // 注册
                             doRegister(url);
+                            // remove
                             failedRegistered.remove(url);
                         } catch (Throwable t) { // Ignore all the exceptions and wait for the next retry
                             logger.warn("Failed to retry register " + failed + ", waiting for again, cause: " + t.getMessage(), t);
