@@ -21,6 +21,8 @@ import com.alibaba.dubbo.common.extension.SPI;
 
 /**
  * Compiler. (SPI, Singleton, ThreadSafe)
+ * <p>
+ * 默认: javassist
  */
 @SPI("javassist")
 public interface Compiler {
@@ -28,9 +30,9 @@ public interface Compiler {
     /**
      * Compile java source code.
      *
-     * @param code        Java source code
+     * @param code        Java source code Java源代码
      * @param classLoader classloader
-     * @return Compiled class
+     * @return Compiled class 编译结果
      */
     Class<?> compile(String code, ClassLoader classLoader);
 

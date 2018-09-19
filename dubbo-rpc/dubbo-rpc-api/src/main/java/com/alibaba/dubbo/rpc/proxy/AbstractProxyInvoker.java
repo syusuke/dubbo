@@ -17,11 +17,7 @@
 package com.alibaba.dubbo.rpc.proxy;
 
 import com.alibaba.dubbo.common.URL;
-import com.alibaba.dubbo.rpc.Invocation;
-import com.alibaba.dubbo.rpc.Invoker;
-import com.alibaba.dubbo.rpc.Result;
-import com.alibaba.dubbo.rpc.RpcException;
-import com.alibaba.dubbo.rpc.RpcResult;
+import com.alibaba.dubbo.rpc.*;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -30,8 +26,14 @@ import java.lang.reflect.InvocationTargetException;
  */
 public abstract class AbstractProxyInvoker<T> implements Invoker<T> {
 
+    /**
+     * 代理的对象，一般是 Service 实现对象
+     */
     private final T proxy;
 
+    /**
+     * 一般是接口
+     */
     private final Class<T> type;
 
     private final URL url;
@@ -81,6 +83,16 @@ public abstract class AbstractProxyInvoker<T> implements Invoker<T> {
         }
     }
 
+    /**
+     * 执行调用
+     *
+     * @param proxy          代理对象,动态生成
+     * @param methodName     方法名,
+     * @param parameterTypes 参数类型列表
+     * @param arguments      参数
+     * @return
+     * @throws Throwable
+     */
     protected abstract Object doInvoke(T proxy, String methodName, Class<?>[] parameterTypes, Object[] arguments) throws Throwable;
 
     @Override

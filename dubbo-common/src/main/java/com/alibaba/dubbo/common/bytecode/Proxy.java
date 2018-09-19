@@ -24,13 +24,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -72,8 +66,8 @@ public abstract class Proxy {
     /**
      * Get proxy.
      *
-     * @param cl  class loader.
-     * @param ics interface class array.
+     * @param cl  class loader.  类加载器
+     * @param ics interface class array. 接口列表
      * @return Proxy instance.
      */
     public static Proxy getProxy(ClassLoader cl, Class<?>... ics) {

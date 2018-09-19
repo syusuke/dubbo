@@ -17,13 +17,7 @@
 package com.alibaba.dubbo.common.compiler.support;
 
 import com.alibaba.dubbo.common.utils.ClassHelper;
-
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtField;
-import javassist.CtNewConstructor;
-import javassist.CtNewMethod;
-import javassist.LoaderClassPath;
+import javassist.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,14 +31,29 @@ import java.util.regex.Pattern;
  */
 public class JavassistCompiler extends AbstractCompiler {
 
+    /**
+     * 正则 - 匹配 import
+     */
     private static final Pattern IMPORT_PATTERN = Pattern.compile("import\\s+([\\w\\.\\*]+);\n");
 
+    /**
+     * 正则 - 匹配 extends
+     */
     private static final Pattern EXTENDS_PATTERN = Pattern.compile("\\s+extends\\s+([\\w\\.]+)[^\\{]*\\{\n");
 
+    /**
+     * 正则 - 匹配 implements
+     */
     private static final Pattern IMPLEMENTS_PATTERN = Pattern.compile("\\s+implements\\s+([\\w\\.]+)\\s*\\{\n");
 
+    /**
+     * 正则 - 匹配方法
+     */
     private static final Pattern METHODS_PATTERN = Pattern.compile("\n(private|public|protected)\\s+");
 
+    /**
+     * 正则 - 匹配变量
+     */
     private static final Pattern FIELD_PATTERN = Pattern.compile("[^\n]+=[^\n]+;");
 
     @Override
@@ -54,15 +63,20 @@ public class JavassistCompiler extends AbstractCompiler {
         ClassPool pool = new ClassPool(true);
         pool.appendClassPath(new LoaderClassPath(ClassHelper.getCallerClassLoader(getClass())));
         Matcher matcher = IMPORT_PATTERN.matcher(source);
+
+        // import 的所有包名
         List<String> importPackages = new ArrayList<String>();
+        // 引用的类名
         Map<String, String> fullNames = new HashMap<String, String>();
         while (matcher.find()) {
             String pkg = matcher.group(1);
             if (pkg.endsWith(".*")) {
+                // 引用整个包下的类/接口 import java.lang.*;
                 String pkgName = pkg.substring(0, pkg.length() - 2);
                 pool.importPackage(pkgName);
                 importPackages.add(pkgName);
             } else {
+                // 引用指定类/接口
                 int pi = pkg.lastIndexOf('.');
                 if (pi > 0) {
                     String pkgName = pkg.substring(0, pi);
@@ -73,6 +87,8 @@ public class JavassistCompiler extends AbstractCompiler {
             }
         }
         String[] packages = importPackages.toArray(new String[0]);
+
+        // extends
         matcher = EXTENDS_PATTERN.matcher(source);
         CtClass cls;
         if (matcher.find()) {
@@ -89,6 +105,8 @@ public class JavassistCompiler extends AbstractCompiler {
         } else {
             cls = pool.makeClass(name);
         }
+
+        // 实现接口
         matcher = IMPLEMENTS_PATTERN.matcher(source);
         if (matcher.find()) {
             String[] ifaces = matcher.group(1).trim().split("\\,");
@@ -119,6 +137,9 @@ public class JavassistCompiler extends AbstractCompiler {
                 }
             }
         }
+        // JavassistCompiler.class.getProtectionDomain() =》 设置保护域和 JavassistCompiler 一致，即 `#getClass()` 方法。
+        // 深入见 《Java安全——安全管理器、访问控制器和类装载器》https://www.zybuluo.com/changedi/note/417132
+
         return cls.toClass(ClassHelper.getCallerClassLoader(getClass()), JavassistCompiler.class.getProtectionDomain());
     }
 

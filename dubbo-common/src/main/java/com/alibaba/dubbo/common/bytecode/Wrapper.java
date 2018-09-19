@@ -23,11 +23,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
@@ -96,14 +92,18 @@ public abstract class Wrapper {
      * @return Wrapper instance(not null).
      */
     public static Wrapper getWrapper(Class<?> c) {
+        // 判断是否继承 ClassGenerator.DC.class ，如果是，拿到父类，避免重复包装
         while (ClassGenerator.isDynamicClass(c)) // can not wrapper on dynamic class.
             c = c.getSuperclass();
 
+        // 指定类为 Object.class
         if (c == Object.class)
             return OBJECT_WRAPPER;
 
+        // 从缓存中获得 Wrapper 对象
         Wrapper ret = WRAPPER_MAP.get(c);
         if (ret == null) {
+            // 创建 Wrapper 对象，并添加到缓存
             ret = makeWrapper(c);
             WRAPPER_MAP.put(c, ret);
         }
@@ -121,6 +121,21 @@ public abstract class Wrapper {
         StringBuilder c2 = new StringBuilder("public Object getPropertyValue(Object o, String n){ ");
         StringBuilder c3 = new StringBuilder("public Object invokeMethod(Object o, String n, Class[] p, Object[] v) throws " + InvocationTargetException.class.getName() + "{ ");
 
+        // name 为全限定类名,
+        /**
+         * <pre>
+         * XXXService w ;
+         * try {
+         *   w = ((XXXService)参数1);
+         * } catch(Throwable e){
+         *     throw new IllegalArgumentException(e);
+         * }
+         *
+         * if(参数2.equals(fn){
+         *
+         * })
+         * </pre>
+         */
         c1.append(name).append(" w; try{ w = ((").append(name).append(")$1); }catch(Throwable e){ throw new IllegalArgumentException(e); }");
         c2.append(name).append(" w; try{ w = ((").append(name).append(")$1); }catch(Throwable e){ throw new IllegalArgumentException(e); }");
         c3.append(name).append(" w; try{ w = ((").append(name).append(")$1); }catch(Throwable e){ throw new IllegalArgumentException(e); }");
@@ -413,12 +428,14 @@ public abstract class Wrapper {
 
     /**
      * invoke method.
+     * <p>
+     * 调用方法
      *
-     * @param instance instance.
-     * @param mn       method name.
+     * @param instance instance. 被调用的对象
+     * @param mn       method name. 方法名
      * @param types
-     * @param args     argument array.
-     * @return return value.
+     * @param args     argument array. 参数列表
+     * @return return value. 返回值
      */
     abstract public Object invokeMethod(Object instance, String mn, Class<?>[] types, Object[] args) throws NoSuchMethodException, InvocationTargetException;
 }
