@@ -49,6 +49,7 @@ public class ProtocolFilterWrapper implements Protocol {
         if (!filters.isEmpty()) {
             for (int i = filters.size() - 1; i >= 0; i--) {
                 final Filter filter = filters.get(i);
+                // 不断执行过滤链.
                 final Invoker<T> next = last;
                 last = new Invoker<T>() {
 
