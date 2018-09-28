@@ -51,8 +51,15 @@ public class HttpProtocol extends AbstractProxyProtocol {
 
     public static final int DEFAULT_PORT = 80;
 
+    /**
+     * Http Server集合:
+     * KEY: ip:PORT
+     */
     private final Map<String, HttpServer> serverMap = new ConcurrentHashMap<String, HttpServer>();
 
+    /**
+     * KEY: path 服务名
+     */
     private final Map<String, HttpInvokerServiceExporter> skeletonMap = new ConcurrentHashMap<String, HttpInvokerServiceExporter>();
 
     private HttpBinder httpBinder;
@@ -72,9 +79,12 @@ public class HttpProtocol extends AbstractProxyProtocol {
 
     @Override
     protected <T> Runnable doExport(final T impl, Class<T> type, URL url) throws RpcException {
+        // 获得服务器地址
         String addr = getAddr(url);
+        // 获得服务
         HttpServer server = serverMap.get(addr);
         if (server == null) {
+            // Create
             server = httpBinder.bind(url, new InternalHandler());
             serverMap.put(addr, server);
         }
@@ -131,7 +141,12 @@ public class HttpProtocol extends AbstractProxyProtocol {
         httpProxyFactoryBean.setServiceUrl(key);
         httpProxyFactoryBean.setServiceInterface(serviceType);
         String client = url.getParameter(Constants.CLIENT_KEY);
+
+
+
         if (client == null || client.length() == 0 || "simple".equals(client)) {
+            // using HttpURLConnection
+
             SimpleHttpInvokerRequestExecutor httpInvokerRequestExecutor = new SimpleHttpInvokerRequestExecutor() {
                 @Override
                 protected void prepareConnection(HttpURLConnection con,
@@ -143,6 +158,7 @@ public class HttpProtocol extends AbstractProxyProtocol {
             };
             httpProxyFactoryBean.setHttpInvokerRequestExecutor(httpInvokerRequestExecutor);
         } else if ("commons".equals(client)) {
+            // Apache HttpClient
             HttpComponentsHttpInvokerRequestExecutor httpInvokerRequestExecutor = new HttpComponentsHttpInvokerRequestExecutor();
             httpInvokerRequestExecutor.setReadTimeout(url.getParameter(Constants.TIMEOUT_KEY, Constants.DEFAULT_TIMEOUT));
             httpInvokerRequestExecutor.setConnectTimeout(url.getParameter(Constants.CONNECT_TIMEOUT_KEY, Constants.DEFAULT_CONNECT_TIMEOUT));
@@ -179,9 +195,11 @@ public class HttpProtocol extends AbstractProxyProtocol {
                 throws IOException, ServletException {
             String uri = request.getRequestURI();
             HttpInvokerServiceExporter skeleton = skeletonMap.get(uri);
+            // 必须是POST
             if (!request.getMethod().equalsIgnoreCase("POST")) {
                 response.setStatus(500);
             } else {
+                // 执行调用
                 RpcContext.getContext().setRemoteAddress(request.getRemoteAddr(), request.getRemotePort());
                 try {
                     skeleton.handleRequest(request, response);

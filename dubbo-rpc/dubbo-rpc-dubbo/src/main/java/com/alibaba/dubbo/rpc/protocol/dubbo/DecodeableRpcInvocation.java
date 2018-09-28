@@ -97,9 +97,12 @@ public class DecodeableRpcInvocation extends RpcInvocation implements Codec, Dec
         setAttachment(Constants.PATH_KEY, in.readUTF());
         setAttachment(Constants.VERSION_KEY, in.readUTF());
 
+        // 解码方法
         setMethodName(in.readUTF());
         try {
+            // 方法参数值
             Object[] args;
+            // 方法参数类型
             Class<?>[] pts;
             String desc = in.readUTF();
             if (desc.length() == 0) {
@@ -120,6 +123,7 @@ public class DecodeableRpcInvocation extends RpcInvocation implements Codec, Dec
             }
             setParameterTypes(pts);
 
+            // 解码隐式传参集合
             Map<String, String> map = (Map<String, String>) in.readObject(Map.class);
             if (map != null && map.size() > 0) {
                 Map<String, String> attachment = getAttachments();
@@ -129,6 +133,7 @@ public class DecodeableRpcInvocation extends RpcInvocation implements Codec, Dec
                 attachment.putAll(map);
                 setAttachments(attachment);
             }
+            // 进一步解码方法参数，主要为了参数返回
             //decode argument ,may be callback
             for (int i = 0; i < args.length; i++) {
                 args[i] = decodeInvocationArgument(channel, this, pts, i, args[i]);

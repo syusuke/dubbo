@@ -31,19 +31,40 @@ import java.io.IOException;
 
 public final class DubboCountCodec implements Codec2 {
 
+    /**
+     * 编解码器
+     */
     private DubboCodec codec = new DubboCodec();
 
+    /**
+     * 编码 Object -> byte[]
+     *
+     * @param channel
+     * @param buffer
+     * @param msg
+     * @throws IOException
+     */
     @Override
     public void encode(Channel channel, ChannelBuffer buffer, Object msg) throws IOException {
         codec.encode(channel, buffer, msg);
     }
 
+    /**
+     * 解码 byte[] -> Object
+     *
+     * @param channel
+     * @param buffer
+     * @return
+     * @throws IOException
+     */
     @Override
     public Object decode(Channel channel, ChannelBuffer buffer) throws IOException {
         int save = buffer.readerIndex();
         MultiMessage result = MultiMessage.create();
         do {
+            // 解码
             Object obj = codec.decode(channel, buffer);
+            // 输入不够，重置读进度
             if (Codec2.DecodeResult.NEED_MORE_INPUT == obj) {
                 buffer.readerIndex(save);
                 break;
@@ -62,6 +83,12 @@ public final class DubboCountCodec implements Codec2 {
         return result;
     }
 
+    /**
+     * 记录,用于 MonitorFilter
+     *
+     * @param result
+     * @param bytes
+     */
     private void logMessageLength(Object result, int bytes) {
         if (bytes <= 0) {
             return;

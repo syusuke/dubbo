@@ -37,6 +37,11 @@ import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.util.Map;
 
+/**
+ * 可解码的 RpcResult 实现类。
+ * <p>
+ * 返回结果
+ */
 public class DecodeableRpcResult extends RpcResult implements Codec, Decodeable {
 
     private static final Logger log = LoggerFactory.getLogger(DecodeableRpcResult.class);
@@ -73,13 +78,14 @@ public class DecodeableRpcResult extends RpcResult implements Codec, Decodeable 
     public Object decode(Channel channel, InputStream input) throws IOException {
         ObjectInput in = CodecSupport.getSerialization(channel.getUrl(), serializationType)
                 .deserialize(channel.getUrl(), input);
-        
+
         byte flag = in.readByte();
         switch (flag) {
             case DubboCodec.RESPONSE_NULL_VALUE:
                 break;
             case DubboCodec.RESPONSE_VALUE:
                 try {
+                    // 返回Type
                     Type[] returnType = RpcUtils.getReturnTypes(invocation);
                     setValue(returnType == null || returnType.length == 0 ? in.readObject() :
                             (returnType.length == 1 ? in.readObject((Class<?>) returnType[0])
@@ -91,7 +97,7 @@ public class DecodeableRpcResult extends RpcResult implements Codec, Decodeable 
             case DubboCodec.RESPONSE_WITH_EXCEPTION:
                 try {
                     Object obj = in.readObject();
-                    if (obj instanceof Throwable == false)
+                    if (!(obj instanceof Throwable))
                         throw new IOException("Response data error, expect Throwable, but get " + obj);
                     setException((Throwable) obj);
                 } catch (ClassNotFoundException e) {
@@ -119,7 +125,7 @@ public class DecodeableRpcResult extends RpcResult implements Codec, Decodeable 
             case DubboCodec.RESPONSE_WITH_EXCEPTION_WITH_ATTACHMENTS:
                 try {
                     Object obj = in.readObject();
-                    if (obj instanceof Throwable == false)
+                    if (!(obj instanceof Throwable))
                         throw new IOException("Response data error, expect Throwable, but get " + obj);
                     setException((Throwable) obj);
                     setAttachments((Map<String, String>) in.readObject(Map.class));
