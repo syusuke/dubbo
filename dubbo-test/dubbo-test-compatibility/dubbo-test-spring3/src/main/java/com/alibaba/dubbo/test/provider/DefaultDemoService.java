@@ -18,6 +18,7 @@ package com.alibaba.dubbo.test.provider;
 
 import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.dubbo.demo.DemoService;
+import com.alibaba.dubbo.demo.ParamCallback;
 
 /**
  * Default {@link DemoService} implementation
@@ -35,6 +36,36 @@ public class DefaultDemoService implements DemoService {
     @Override
     public String sayHello(String name) {
         return "DefaultDemoService - sayHell() : " + name;
+    }
+
+    @Override
+    public void bye(Object o) {
+
+    }
+
+    @Override
+    public void callbackParam(String msg, ParamCallback callback) {
+
+    }
+
+    @Override
+    public String say01(String msg) {
+        return null;
+    }
+
+    @Override
+    public String[] say02() {
+        return new String[0];
+    }
+
+    @Override
+    public void say03() {
+
+    }
+
+    @Override
+    public Void say04() {
+        return null;
     }
 
 }

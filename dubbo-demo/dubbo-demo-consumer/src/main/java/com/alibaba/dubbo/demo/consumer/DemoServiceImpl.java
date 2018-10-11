@@ -17,6 +17,7 @@
 package com.alibaba.dubbo.demo.consumer;
 
 import com.alibaba.dubbo.demo.DemoService;
+import com.alibaba.dubbo.demo.ParamCallback;
 import com.alibaba.dubbo.rpc.RpcContext;
 
 import java.text.SimpleDateFormat;
@@ -28,6 +29,36 @@ public class DemoServiceImpl implements DemoService {
     public String sayHello(String name) {
         System.out.println("[" + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "] Hello " + name + ", request from consumer: " + RpcContext.getContext().getRemoteAddress());
         return "Hello " + name + ", response from provider: " + RpcContext.getContext().getLocalAddress();
+    }
+
+    @Override
+    public void bye(Object o) {
+
+    }
+
+    @Override
+    public void callbackParam(String msg, ParamCallback callback) {
+
+    }
+
+    @Override
+    public String say01(String msg) {
+        return null;
+    }
+
+    @Override
+    public String[] say02() {
+        return new String[0];
+    }
+
+    @Override
+    public void say03() {
+
+    }
+
+    @Override
+    public Void say04() {
+        return null;
     }
 
 }

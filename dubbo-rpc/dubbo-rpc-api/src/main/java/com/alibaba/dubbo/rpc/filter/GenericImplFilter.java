@@ -66,6 +66,7 @@ public class GenericImplFilter implements Filter {
             }
 
             Object[] args;
+            // bean JavaBeanDescriptor PoJo => args
             if (ProtocolUtils.isBeanGenericSerialization(generic)) {
                 args = new Object[arguments.length];
                 for (int i = 0; i < arguments.length; i++) {
@@ -78,12 +79,15 @@ public class GenericImplFilter implements Filter {
             invocation2.setMethodName(Constants.$INVOKE);
             invocation2.setParameterTypes(GENERIC_PARAMETER_TYPES);
             invocation2.setArguments(new Object[]{methodName, types, args});
+            // 远程执行
             Result result = invoker.invoke(invocation2);
 
             if (!result.hasException()) {
+                // 正常
                 Object value = result.getValue();
                 try {
                     Method method = invoker.getInterface().getMethod(methodName, parameterTypes);
+                    // 转换回去  args => PoJo
                     if (ProtocolUtils.isBeanGenericSerialization(generic)) {
                         if (value == null) {
                             return new RpcResult(value);
@@ -105,6 +109,7 @@ public class GenericImplFilter implements Filter {
                     throw new RpcException(e.getMessage(), e);
                 }
             } else if (result.getException() instanceof GenericException) {
+                // @see com.alibaba.dubbo.rpc.service.GenericException
                 GenericException exception = (GenericException) result.getException();
                 try {
                     String className = exception.getExceptionClass();
@@ -115,6 +120,7 @@ public class GenericImplFilter implements Filter {
                         targetException = (Throwable) clazz.newInstance();
                     } catch (Throwable e) {
                         lastException = e;
+                        // 一直找符合要求的  Constructor 方法
                         for (Constructor<?> constructor : clazz.getConstructors()) {
                             try {
                                 targetException = (Throwable) constructor.newInstance(new Object[constructor.getParameterTypes().length]);
