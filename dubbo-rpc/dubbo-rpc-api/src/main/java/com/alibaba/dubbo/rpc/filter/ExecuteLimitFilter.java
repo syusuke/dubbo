@@ -19,12 +19,7 @@ package com.alibaba.dubbo.rpc.filter;
 import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.URL;
 import com.alibaba.dubbo.common.extension.Activate;
-import com.alibaba.dubbo.rpc.Filter;
-import com.alibaba.dubbo.rpc.Invocation;
-import com.alibaba.dubbo.rpc.Invoker;
-import com.alibaba.dubbo.rpc.Result;
-import com.alibaba.dubbo.rpc.RpcException;
-import com.alibaba.dubbo.rpc.RpcStatus;
+import com.alibaba.dubbo.rpc.*;
 
 import java.util.concurrent.Semaphore;
 
@@ -40,8 +35,10 @@ public class ExecuteLimitFilter implements Filter {
         String methodName = invocation.getMethodName();
         Semaphore executesLimit = null;
         boolean acquireResult = false;
+        // 获得服务提供者每服务每方法最大可并行执行请求数
         int max = url.getMethodParameter(methodName, Constants.EXECUTES_KEY, 0);
         if (max > 0) {
+            // 获得 RpcStatus 对象，基于服务 URL + 方法维度
             RpcStatus count = RpcStatus.getStatus(url, invocation.getMethodName());
 //            if (count.getActive() >= max) {
             /**
@@ -49,7 +46,7 @@ public class ExecuteLimitFilter implements Filter {
              * use semaphore for concurrency control (to limit thread number)
              */
             executesLimit = count.getSemaphore(max);
-            if(executesLimit != null && !(acquireResult = executesLimit.tryAcquire())) {
+            if (executesLimit != null && !(acquireResult = executesLimit.tryAcquire())) {
                 throw new RpcException("Failed to invoke method " + invocation.getMethodName() + " in provider " + url + ", cause: The service using threads greater than <dubbo:service executes=\"" + max + "\" /> limited.");
             }
         }
@@ -57,8 +54,7 @@ public class ExecuteLimitFilter implements Filter {
         boolean isSuccess = true;
         RpcStatus.beginCount(url, methodName);
         try {
-            Result result = invoker.invoke(invocation);
-            return result;
+            return invoker.invoke(invocation);
         } catch (Throwable t) {
             isSuccess = false;
             if (t instanceof RuntimeException) {
@@ -68,7 +64,8 @@ public class ExecuteLimitFilter implements Filter {
             }
         } finally {
             RpcStatus.endCount(url, methodName, System.currentTimeMillis() - begin, isSuccess);
-            if(acquireResult) {
+            // 释放信号量
+            if (acquireResult) {
                 executesLimit.release();
             }
         }

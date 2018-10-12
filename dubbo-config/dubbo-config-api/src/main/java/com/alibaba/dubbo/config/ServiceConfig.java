@@ -451,7 +451,8 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 map.put(Constants.METHODS_KEY, StringUtils.join(new HashSet<String>(Arrays.asList(methods)), ","));
             }
         }
-        //https://dubbo.gitbooks.io/dubbo-user-book/demos/token-authorization.html
+        // token
+        // https://dubbo.gitbooks.io/dubbo-user-book/demos/token-authorization.html
         if (!ConfigUtils.isEmpty(token)) {
             if (ConfigUtils.isDefault(token)) {
                 map.put(Constants.TOKEN_KEY, UUID.randomUUID().toString());

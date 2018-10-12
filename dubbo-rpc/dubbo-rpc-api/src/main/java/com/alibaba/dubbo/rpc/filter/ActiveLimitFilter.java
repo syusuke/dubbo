@@ -19,12 +19,7 @@ package com.alibaba.dubbo.rpc.filter;
 import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.URL;
 import com.alibaba.dubbo.common.extension.Activate;
-import com.alibaba.dubbo.rpc.Filter;
-import com.alibaba.dubbo.rpc.Invocation;
-import com.alibaba.dubbo.rpc.Invoker;
-import com.alibaba.dubbo.rpc.Result;
-import com.alibaba.dubbo.rpc.RpcException;
-import com.alibaba.dubbo.rpc.RpcStatus;
+import com.alibaba.dubbo.rpc.*;
 
 /**
  * LimitInvokerFilter
@@ -36,22 +31,28 @@ public class ActiveLimitFilter implements Filter {
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         URL url = invoker.getUrl();
         String methodName = invocation.getMethodName();
+        // 获得服务提供者每服务每方法最大可并行执行请求数
         int max = invoker.getUrl().getMethodParameter(methodName, Constants.ACTIVES_KEY, 0);
+
         RpcStatus count = RpcStatus.getStatus(invoker.getUrl(), invocation.getMethodName());
         if (max > 0) {
+            // 获得超时值
             long timeout = invoker.getUrl().getMethodParameter(invocation.getMethodName(), Constants.TIMEOUT_KEY, 0);
             long start = System.currentTimeMillis();
             long remain = timeout;
             int active = count.getActive();
             if (active >= max) {
                 synchronized (count) {
+                    // 通过锁，有且仅有一个在等待
                     while ((active = count.getActive()) >= max) {
+                        // 循环，等待可并行执行请求数
                         try {
                             count.wait(remain);
                         } catch (InterruptedException e) {
                         }
                         long elapsed = System.currentTimeMillis() - start;
                         remain = timeout - elapsed;
+                        // 判断是否没有剩余时长了，抛出 RpcException 异常
                         if (remain <= 0) {
                             throw new RpcException("Waiting concurrent invoke timeout in client-side for service:  "
                                     + invoker.getInterface().getName() + ", method: "
@@ -76,6 +77,7 @@ public class ActiveLimitFilter implements Filter {
             }
         } finally {
             if (max > 0) {
+                // 唤醒等待的相同服务的相同方法的请求
                 synchronized (count) {
                     count.notify();
                 }

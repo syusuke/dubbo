@@ -18,6 +18,7 @@ package com.alibaba.dubbo.rpc;
 
 import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.URL;
+import com.alibaba.dubbo.rpc.filter.ActiveLimitFilter;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -34,23 +35,62 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class RpcStatus {
 
+    /**
+     * 基于服务 URL 为维度的 RpcStatus 集合
+     * key：URL
+     */
     private static final ConcurrentMap<String, RpcStatus> SERVICE_STATISTICS = new ConcurrentHashMap<String, RpcStatus>();
 
+    /**
+     * 基于服务 URL + 方法维度的 RpcStatus 集合
+     * key：URL
+     * value: 方法名
+     */
     private static final ConcurrentMap<String, ConcurrentMap<String, RpcStatus>> METHOD_STATISTICS = new ConcurrentHashMap<String, ConcurrentMap<String, RpcStatus>>();
     private final ConcurrentMap<String, Object> values = new ConcurrentHashMap<String, Object>();
+    /**
+     * 调用中的次数
+     * 在 {@link ActiveLimitFilter} 中非常关键
+     */
     private final AtomicInteger active = new AtomicInteger();
+    /**
+     * 总调用次数
+     */
     private final AtomicLong total = new AtomicLong();
+    /**
+     * 总调用失败次数
+     */
     private final AtomicInteger failed = new AtomicInteger();
+    /**
+     * 总调用时长，单位：毫秒
+     */
     private final AtomicLong totalElapsed = new AtomicLong();
+    /**
+     * 总调用失败时长，单位：毫秒
+     */
     private final AtomicLong failedElapsed = new AtomicLong();
+    /**
+     * 最大调用时长，单位：毫秒
+     */
     private final AtomicLong maxElapsed = new AtomicLong();
+    /**
+     * 最大调用失败时长，单位：毫秒
+     */
     private final AtomicLong failedMaxElapsed = new AtomicLong();
+    /**
+     * 最大调用成功时长，单位：毫秒
+     */
     private final AtomicLong succeededMaxElapsed = new AtomicLong();
 
     /**
+     * 服务执行信号量，
+     * {@link com.alibaba.dubbo.rpc.filter.ExecuteLimitFilter} 关键
      * Semaphore used to control concurrency limit set by `executes`
      */
     private volatile Semaphore executesLimit;
+    /**
+     * 服务执行信号量大小
+     */
     private volatile int executesPermits;
 
     private RpcStatus() {
@@ -61,6 +101,7 @@ public class RpcStatus {
      * @return status
      */
     public static RpcStatus getStatus(URL url) {
+
         String uri = url.toIdentityString();
         RpcStatus status = SERVICE_STATISTICS.get(uri);
         if (status == null) {
@@ -71,6 +112,8 @@ public class RpcStatus {
     }
 
     /**
+     * 基于URL
+     *
      * @param url
      */
     public static void removeStatus(URL url) {
@@ -79,6 +122,8 @@ public class RpcStatus {
     }
 
     /**
+     * 基于URL+方法名
+     *
      * @param url
      * @param methodName
      * @return status
@@ -110,6 +155,8 @@ public class RpcStatus {
     }
 
     /**
+     * 开始计数
+     *
      * @param url
      */
     public static void beginCount(URL url, String methodName) {
@@ -122,9 +169,11 @@ public class RpcStatus {
     }
 
     /**
+     * 结束计数
+     *
      * @param url
-     * @param elapsed
-     * @param succeeded
+     * @param elapsed   时长，毫秒
+     * @param succeeded 是否成功
      */
     public static void endCount(URL url, String methodName, long elapsed, boolean succeeded) {
         endCount(getStatus(url), elapsed, succeeded);
@@ -134,10 +183,14 @@ public class RpcStatus {
     private static void endCount(RpcStatus status, long elapsed, boolean succeeded) {
         status.active.decrementAndGet();
         status.total.incrementAndGet();
+        // 时间累加
         status.totalElapsed.addAndGet(elapsed);
+
         if (status.maxElapsed.get() < elapsed) {
+            // 最大调用时间
             status.maxElapsed.set(elapsed);
         }
+
         if (succeeded) {
             if (status.succeededMaxElapsed.get() < elapsed) {
                 status.succeededMaxElapsed.set(elapsed);
@@ -319,10 +372,10 @@ public class RpcStatus {
      * @return thread number semaphore
      */
     public Semaphore getSemaphore(int maxThreadNum) {
-        if(maxThreadNum <= 0) {
+        if (maxThreadNum <= 0) {
             return null;
         }
-
+        // 若信号量不存在，或者信号量大小改变，创建新的信号量
         if (executesLimit == null || executesPermits != maxThreadNum) {
             synchronized (this) {
                 if (executesLimit == null || executesPermits != maxThreadNum) {

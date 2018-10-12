@@ -20,16 +20,14 @@ import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.extension.Activate;
 import com.alibaba.dubbo.common.logger.Logger;
 import com.alibaba.dubbo.common.logger.LoggerFactory;
-import com.alibaba.dubbo.rpc.Filter;
-import com.alibaba.dubbo.rpc.Invocation;
-import com.alibaba.dubbo.rpc.Invoker;
-import com.alibaba.dubbo.rpc.Result;
-import com.alibaba.dubbo.rpc.RpcException;
+import com.alibaba.dubbo.rpc.*;
 
 import java.util.Arrays;
 
 /**
  * Log any invocation timeout, but don't stop server from running
+ * <p>
+ * 此处的 "timeout" 取得的是服务提供者的配置，不同于服务消费者的配置。
  */
 @Activate(group = Constants.PROVIDER)
 public class TimeoutFilter implements Filter {
@@ -44,6 +42,7 @@ public class TimeoutFilter implements Filter {
         if (invoker.getUrl() != null
                 && elapsed > invoker.getUrl().getMethodParameter(invocation.getMethodName(),
                 "timeout", Integer.MAX_VALUE)) {
+            // 超过时长，打印告警日志
             if (logger.isWarnEnabled()) {
                 logger.warn("invoke time out. method: " + invocation.getMethodName()
                         + " arguments: " + Arrays.toString(invocation.getArguments()) + " , url is "
