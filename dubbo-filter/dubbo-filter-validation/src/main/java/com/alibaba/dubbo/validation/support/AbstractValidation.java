@@ -28,6 +28,10 @@ import java.util.concurrent.ConcurrentMap;
  */
 public abstract class AbstractValidation implements Validation {
 
+    /**
+     * Validator集合
+     * key：URL
+     */
     private final ConcurrentMap<String, Validator> validators = new ConcurrentHashMap<String, Validator>();
 
     @Override

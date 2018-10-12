@@ -23,48 +23,19 @@ import com.alibaba.dubbo.common.logger.LoggerFactory;
 import com.alibaba.dubbo.common.utils.ReflectUtils;
 import com.alibaba.dubbo.validation.MethodValidated;
 import com.alibaba.dubbo.validation.Validator;
-
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtField;
-import javassist.CtNewConstructor;
-import javassist.Modifier;
-import javassist.NotFoundException;
+import javassist.*;
 import javassist.bytecode.AnnotationsAttribute;
 import javassist.bytecode.ClassFile;
 import javassist.bytecode.ConstPool;
-import javassist.bytecode.annotation.ArrayMemberValue;
-import javassist.bytecode.annotation.BooleanMemberValue;
-import javassist.bytecode.annotation.ByteMemberValue;
-import javassist.bytecode.annotation.CharMemberValue;
-import javassist.bytecode.annotation.ClassMemberValue;
-import javassist.bytecode.annotation.DoubleMemberValue;
-import javassist.bytecode.annotation.EnumMemberValue;
-import javassist.bytecode.annotation.FloatMemberValue;
-import javassist.bytecode.annotation.IntegerMemberValue;
-import javassist.bytecode.annotation.LongMemberValue;
-import javassist.bytecode.annotation.MemberValue;
-import javassist.bytecode.annotation.ShortMemberValue;
-import javassist.bytecode.annotation.StringMemberValue;
+import javassist.bytecode.annotation.*;
 
-import javax.validation.Constraint;
-import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
-import javax.validation.Validation;
-import javax.validation.ValidatorFactory;
+import javax.validation.*;
 import javax.validation.groups.Default;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * JValidator
@@ -79,8 +50,11 @@ public class JValidator implements Validator {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public JValidator(URL url) {
+        // 获得服务接口类
         this.clazz = ReflectUtils.forName(url.getServiceInterface());
+        // 获得 `"jvalidation"` 配置项
         String jvalidation = url.getParameter("jvalidation");
+        // 获得 ValidatorFactory 对象
         ValidatorFactory factory;
         if (jvalidation != null && jvalidation.length() > 0) {
             factory = Validation.byProvider((Class) ReflectUtils.forName(jvalidation)).configure().buildValidatorFactory();
@@ -90,10 +64,18 @@ public class JValidator implements Validator {
         this.validator = factory.getValidator();
     }
 
+    /**
+     * 基本类型
+     *
+     * @param cls
+     * @return
+     */
     private static boolean isPrimitives(Class<?> cls) {
         if (cls.isArray()) {
+            // [] 数组，使用内部的类来判断
             return isPrimitive(cls.getComponentType());
         }
+        // 直接判断
         return isPrimitive(cls);
     }
 
@@ -102,6 +84,38 @@ public class JValidator implements Validator {
                 || Number.class.isAssignableFrom(cls) || Date.class.isAssignableFrom(cls);
     }
 
+    /**
+     * 根据方法，自动生成 Bean 类的例子
+     * <pre>
+     * void demo(@NotNull(message = "名字不能为空") @Min(value = 6, message = "昵称不能太短") String name,
+     *           String password, // 不校验
+     *           @NotNull(message = "至少需要保存一个用户") User user);
+     * </pre>
+     * 生成Bean类
+     * <pre>
+     * package com.alibaba.dubbo.demo.DemoService_DemoParameter_java.lang.String_java.lang.String_com.alibaba.dubbo.demo.entity;
+     *
+     * public class User {
+     *
+     *     @NotNull(message = "名字不能为空")
+     *     @Min(value = 6, message = "昵称不能太短")
+     *     public java.lang.String name;
+     *
+     *     public java.lang.String password;
+     *
+     *     @NotNull(message = "至少需要保存一个用户")
+     *     public com.alibaba.dubbo.demo.entity.User user;
+     *
+     *     public User() {}
+     *
+     * }
+     * </pre>
+     *
+     * @param clazz
+     * @param method
+     * @param args
+     * @return
+     */
     private static Object getMethodParameterBean(Class<?> clazz, Method method, Object[] args) {
         if (!hasConstraintParameter(method)) {
             return null;
@@ -220,7 +234,7 @@ public class JValidator implements Validator {
             ((StringMemberValue) memberValue).setValue((String) value);
         else if (memberValue instanceof EnumMemberValue)
             ((EnumMemberValue) memberValue).setValue(((Enum<?>) value).name());
-        /* else if (memberValue instanceof AnnotationMemberValue) */
+            /* else if (memberValue instanceof AnnotationMemberValue) */
         else if (memberValue instanceof ArrayMemberValue) {
             CtClass arrayType = type.getComponentType();
             int len = Array.getLength(value);
@@ -233,9 +247,19 @@ public class JValidator implements Validator {
         return memberValue;
     }
 
+    /**
+     * 验证参数的合法性
+     *
+     * @param methodName
+     * @param parameterTypes
+     * @param arguments
+     * @throws Exception
+     */
     @Override
     public void validate(String methodName, Class<?>[] parameterTypes, Object[] arguments) throws Exception {
         List<Class<?>> groups = new ArrayList<Class<?>>();
+
+        // 【第一种】添加以方法命名的内部接口，作为验证分组。例如 `ValidationService#save(...)` 方法，对应 `ValidationService.Save` 接口。
         String methodClassName = clazz.getName() + "$" + toUpperMethoName(methodName);
         Class<?> methodClass = null;
         try {
@@ -246,20 +270,25 @@ public class JValidator implements Validator {
         Set<ConstraintViolation<?>> violations = new HashSet<ConstraintViolation<?>>();
         Method method = clazz.getMethod(methodName, parameterTypes);
         Class<?>[] methodClasses = null;
-        if (method.isAnnotationPresent(MethodValidated.class)){
+        // 验证分组
+        if (method.isAnnotationPresent(MethodValidated.class)) {
             methodClasses = method.getAnnotation(MethodValidated.class).value();
             groups.addAll(Arrays.asList(methodClasses));
         }
+        // 【第三种】添加 Default.class 类，作为验证分组。在 JSR 303 中，未设置分组的验证注解，使用 Default.class 。
         // add into default group
         groups.add(0, Default.class);
+        // 【第四种】添加服务接口类，作为验证分组
         groups.add(1, clazz);
 
+        // 验证错误集合
         // convert list to array
         Class<?>[] classgroups = groups.toArray(new Class[0]);
 
+        // 【第一步】获得方法参数的 Bean 对象。因为，JSR 303 是 Java Bean Validation ，以 Bean 为维度。
         Object parameterBean = getMethodParameterBean(clazz, method, arguments);
         if (parameterBean != null) {
-            violations.addAll(validator.validate(parameterBean, classgroups ));
+            violations.addAll(validator.validate(parameterBean, classgroups));
         }
 
         for (Object arg : arguments) {
@@ -272,22 +301,34 @@ public class JValidator implements Validator {
         }
     }
 
+    /**
+     * 验证集合参数
+     *
+     * @param violations
+     * @param arg
+     * @param groups
+     */
     private void validate(Set<ConstraintViolation<?>> violations, Object arg, Class<?>... groups) {
         if (arg != null && !isPrimitives(arg.getClass())) {
-            if (Object[].class.isInstance(arg)) {
+            if (arg instanceof Object[]) {
+                // [] 数组
                 for (Object item : (Object[]) arg) {
+                    // 数组里的每一个元素
                     validate(violations, item, groups);
                 }
-            } else if (Collection.class.isInstance(arg)) {
+            } else if (arg instanceof Collection) {
+                // Collection
                 for (Object item : (Collection<?>) arg) {
                     validate(violations, item, groups);
                 }
-            } else if (Map.class.isInstance(arg)) {
+            } else if (arg instanceof Map) {
+                // Map
                 for (Map.Entry<?, ?> entry : ((Map<?, ?>) arg).entrySet()) {
                     validate(violations, entry.getKey(), groups);
                     validate(violations, entry.getValue(), groups);
                 }
             } else {
+                // 单个元素
                 violations.addAll(validator.validate(arg, groups));
             }
         }
