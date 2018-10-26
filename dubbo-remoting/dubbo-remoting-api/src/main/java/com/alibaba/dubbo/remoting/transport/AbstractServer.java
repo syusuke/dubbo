@@ -41,10 +41,25 @@ public abstract class AbstractServer extends AbstractEndpoint implements Server 
 
     protected static final String SERVER_THREAD_POOL_NAME = "DubboServerHandler";
     private static final Logger logger = LoggerFactory.getLogger(AbstractServer.class);
+    /**
+     * 线程池
+     */
     ExecutorService executor;
+    /**
+     * 服务地址
+     */
     private InetSocketAddress localAddress;
+    /**
+     * 绑定地址
+     */
     private InetSocketAddress bindAddress;
+    /**
+     * 服务器最大可接受的连接数
+     */
     private int accepts;
+    /**
+     * 空闲时间
+     */
     private int idleTimeout = 600; //600 seconds
 
     public AbstractServer(URL url, ChannelHandler handler) throws RemotingException {
@@ -68,13 +83,24 @@ public abstract class AbstractServer extends AbstractEndpoint implements Server 
             throw new RemotingException(url.toInetSocketAddress(), null, "Failed to bind " + getClass().getSimpleName()
                     + " on " + getLocalAddress() + ", cause: " + t.getMessage(), t);
         }
+        // 获得线程池
         //fixme replace this with better method
         DataStore dataStore = ExtensionLoader.getExtensionLoader(DataStore.class).getDefaultExtension();
         executor = (ExecutorService) dataStore.get(Constants.EXECUTOR_SERVICE_COMPONENT_KEY, Integer.toString(url.getPort()));
     }
 
+    /**
+     * 模板方法 开启连接
+     *
+     * @throws Throwable
+     */
     protected abstract void doOpen() throws Throwable;
 
+    /**
+     * 模板方法 关闭连接
+     *
+     * @throws Throwable
+     */
     protected abstract void doClose() throws Throwable;
 
     @Override
@@ -131,6 +157,7 @@ public abstract class AbstractServer extends AbstractEndpoint implements Server 
 
     @Override
     public void send(Object message, boolean sent) throws RemotingException {
+        // 获得所有的客户端的通道
         Collection<Channel> channels = getChannels();
         for (Channel channel : channels) {
             if (channel.isConnected()) {
@@ -189,12 +216,14 @@ public abstract class AbstractServer extends AbstractEndpoint implements Server 
             return;
         }
 
+        // 超过上限，关闭新的链接
         Collection<Channel> channels = getChannels();
         if (accepts > 0 && channels.size() > accepts) {
             logger.error("Close channel " + ch + ", cause: The server " + ch.getLocalAddress() + " connections greater than max config " + accepts);
             ch.close();
             return;
         }
+        // 连接
         super.connected(ch);
     }
 
