@@ -23,6 +23,7 @@ import org.apache.dubbo.config.RegistryConfig;
 import org.apache.dubbo.config.ServiceConfig;
 import org.apache.dubbo.config.bootstrap.DubboBootstrap;
 import org.apache.dubbo.demo.DemoService;
+import org.apache.dubbo.demo.GreetingService;
 
 public class Application {
     public static void main(String[] args) throws Exception {
@@ -30,11 +31,17 @@ public class Application {
         service.setInterface(DemoService.class);
         service.setRef(new DemoServiceImpl());
 
+
+        ServiceConfig<GreetingService> greetingService = new ServiceConfig<>();
+        greetingService.setInterface(GreetingService.class);
+        greetingService.setRef(new GreetingServiceImpl());
+
         DubboBootstrap bootstrap = DubboBootstrap.getInstance();
         bootstrap
                 .application(new ApplicationConfig("dubbo-demo-api-provider"))
                 .registry(new RegistryConfig("zookeeper://127.0.0.1:2181"))
                 .service(service)
+                .service(greetingService)
                 .start()
                 .await();
     }
