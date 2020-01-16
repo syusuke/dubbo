@@ -16,6 +16,8 @@
  */
 package org.apache.dubbo.demo.consumer;
 
+import org.apache.dubbo.demo.CallbackListener;
+import org.apache.dubbo.demo.CallbackService;
 import org.apache.dubbo.demo.DemoService;
 
 import org.apache.dubbo.demo.GreetingService;
@@ -38,5 +40,15 @@ public class Application {
         GreetingService greetingService = context.getBean("greetingService", GreetingService.class);
         final String hello1 = greetingService.hello();
         System.out.println("----------------result: " + hello1);
+
+
+        CallbackService callbackService = (CallbackService) context.getBean("callbackService");
+        callbackService.addListener("foo.bar", new CallbackListener() {
+            @Override
+            public void changed(String msg) {
+                System.out.println("msg = " + msg);
+            }
+        });
+        Thread.sleep(15 * 1000L);
     }
 }

@@ -36,6 +36,7 @@ public class Application {
         greetingService.setInterface(GreetingService.class);
         greetingService.setRef(new GreetingServiceImpl());
 
+
         DubboBootstrap bootstrap = DubboBootstrap.getInstance();
         bootstrap
                 .application(new ApplicationConfig("dubbo-demo-api-provider"))

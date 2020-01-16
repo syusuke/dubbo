@@ -23,6 +23,7 @@ import org.apache.dubbo.config.ReferenceConfig;
 import org.apache.dubbo.config.RegistryConfig;
 import org.apache.dubbo.config.bootstrap.DubboBootstrap;
 import org.apache.dubbo.config.utils.ReferenceConfigCache;
+import org.apache.dubbo.demo.CallbackService;
 import org.apache.dubbo.demo.DemoService;
 import org.apache.dubbo.demo.GreetingService;
 
@@ -34,6 +35,9 @@ public class Application {
 
         ReferenceConfig<GreetingService> greetingReference = new ReferenceConfig<>();
         greetingReference.setInterface(GreetingService.class);
+
+        ReferenceConfig<CallbackService> callbackServiceReferenceConfig = new ReferenceConfig<>();
+        callbackServiceReferenceConfig.setInterface(CallbackService.class);
 
 
         DubboBootstrap bootstrap = DubboBootstrap.getInstance();
@@ -47,10 +51,10 @@ public class Application {
         String message = ReferenceConfigCache.getCache().get(reference).sayHello("dubbo");
         System.out.println(message);
 
-
         final String hello = ReferenceConfigCache.getCache().get(greetingReference).hello();
 
         System.out.println(hello);
+
 
     }
 }
