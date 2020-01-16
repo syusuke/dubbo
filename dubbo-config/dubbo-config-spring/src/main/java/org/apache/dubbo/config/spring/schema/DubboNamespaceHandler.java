@@ -56,6 +56,11 @@ public class DubboNamespaceHandler extends NamespaceHandlerSupport implements Co
         Version.checkDuplicate(DubboNamespaceHandler.class);
     }
 
+    /**
+     * 跟 Spring Handler 有关
+     *
+     * dubbo xml 入口
+     */
     @Override
     public void init() {
         registerBeanDefinitionParser("application", new DubboBeanDefinitionParser(ApplicationConfig.class, true));
@@ -85,6 +90,7 @@ public class DubboNamespaceHandler extends NamespaceHandlerSupport implements Co
     @Override
     public BeanDefinition parse(Element element, ParserContext parserContext) {
         BeanDefinitionRegistry registry = parserContext.getRegistry();
+        // 注册了回调事件
         registerAnnotationConfigProcessors(registry);
         registerApplicationListeners(registry);
         BeanDefinition beanDefinition = super.parse(element, parserContext);

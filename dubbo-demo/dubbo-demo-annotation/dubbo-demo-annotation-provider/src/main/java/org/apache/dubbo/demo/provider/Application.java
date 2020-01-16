@@ -29,6 +29,8 @@ import org.springframework.context.annotation.PropertySource;
 public class Application {
     public static void main(String[] args) throws Exception {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ProviderConfiguration.class);
+        final RegistryConfig bean = context.getBean(RegistryConfig.class);
+        System.out.println(bean);
         context.start();
         System.in.read();
     }
