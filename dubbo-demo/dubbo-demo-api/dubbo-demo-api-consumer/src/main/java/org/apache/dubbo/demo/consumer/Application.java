@@ -32,13 +32,15 @@ public class Application {
         // 很多个 reference
         ReferenceConfig<DemoService> reference = new ReferenceConfig<>();
         reference.setInterface(DemoService.class);
+        reference.setCheck(false);
 
         ReferenceConfig<GreetingService> greetingReference = new ReferenceConfig<>();
         greetingReference.setInterface(GreetingService.class);
+        greetingReference.setCheck(false);
 
         ReferenceConfig<CallbackService> callbackServiceReferenceConfig = new ReferenceConfig<>();
         callbackServiceReferenceConfig.setInterface(CallbackService.class);
-
+        callbackServiceReferenceConfig.setCheck(false);
 
         DubboBootstrap bootstrap = DubboBootstrap.getInstance();
         bootstrap
@@ -51,7 +53,8 @@ public class Application {
         String message = ReferenceConfigCache.getCache().get(reference).sayHello("dubbo");
         System.out.println(message);
 
-        final String hello = ReferenceConfigCache.getCache().get(greetingReference).hello();
+        final GreetingService greetingService = ReferenceConfigCache.getCache().get(greetingReference);
+        final String hello = greetingService.hello();
 
         System.out.println(hello);
 

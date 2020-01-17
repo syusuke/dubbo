@@ -40,7 +40,9 @@ public interface DynamicConfigurationFactory {
      */
     static DynamicConfigurationFactory getDynamicConfigurationFactory(String name) {
         Class<DynamicConfigurationFactory> factoryClass = DynamicConfigurationFactory.class;
+        // get SPI
         ExtensionLoader<DynamicConfigurationFactory> loader = getExtensionLoader(factoryClass);
+        // 从 SPI 获取或者创建 DynamicConfigurationFactory 实例
         return loader.getOrDefaultExtension(name);
     }
 }

@@ -252,6 +252,8 @@ public abstract class Wrapper {
         cc.addMethod(c2.toString());
         cc.addMethod(c3.toString());
 
+
+
         try {
             Class<?> wc = cc.toClass();
             // setup static field.

@@ -33,6 +33,12 @@ public abstract class AbstractDynamicConfigurationFactory implements DynamicConf
 
     private volatile Map<String, DynamicConfiguration> dynamicConfigurations = new ConcurrentHashMap<>();
 
+    /**
+     * call from org.apache.dubbo.common.config.configcenter.DynamicConfiguration#getDynamicConfiguration(org.apache.dubbo.common.URL)
+     *
+     * @param url
+     * @return
+     */
     @Override
     public final DynamicConfiguration getDynamicConfiguration(URL url) {
         String key = url == null ? DEFAULT_KEY : url.getAddress();

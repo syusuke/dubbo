@@ -82,6 +82,8 @@ public class AdaptiveClassCodeGenerator {
     }
 
     /**
+     * 生成 Adaptive 接口代码
+     *
      * generate and return class code
      */
     public String generate() {
@@ -156,7 +158,9 @@ public class AdaptiveClassCodeGenerator {
     private String generateMethod(Method method) {
         String methodReturnType = method.getReturnType().getCanonicalName();
         String methodName = method.getName();
+        // 生成 adaptive 方法体
         String methodContent = generateMethodContent(method);
+        // 方法参数
         String methodArgs = generateMethodArguments(method);
         String methodThrows = generateMethodThrows(method);
         return String.format(CODE_METHOD_DECLARATION, methodReturnType, methodName, methodArgs, methodThrows, methodContent);
@@ -203,17 +207,21 @@ public class AdaptiveClassCodeGenerator {
         } else {
             int urlTypeIndex = getUrlTypeIndex(method);
 
+            // @Adaptive 修饰的方法参数必须包括 URL 或者有 URL getXXX() 的方法...
+
             // found parameter in URL type
             if (urlTypeIndex != -1) {
                 // Null Point check
                 code.append(generateUrlNullCheck(urlTypeIndex));
             } else {
+                // GET URL方法
                 // did not find parameter in URL type
                 code.append(generateUrlAssignmentIndirectly(method));
             }
 
             String[] value = getMethodAdaptiveValue(adaptiveAnnotation);
 
+            // org.apache.dubbo.rpc.Invocation 参数
             boolean hasInvocation = hasInvocationArgument(method);
 
             code.append(generateInvocationArgumentNullCheck(method));

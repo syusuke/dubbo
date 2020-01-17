@@ -505,10 +505,12 @@ public class DubboBootstrap extends GenericEventListener {
 
         startConfigCenter();
 
+        // 连接注册中心
         useRegistryAsConfigCenterIfNecessary();
 
         startMetadataReport();
 
+        // 加载远程服务
         loadRemoteConfigs();
 
         checkGlobalConfigs();
@@ -619,8 +621,10 @@ public class DubboBootstrap extends GenericEventListener {
                     cc.setUsername(registryConfig.getUsername());
                     cc.setPassword(registryConfig.getPassword());
                     cc.setHighestPriority(false);
+                    // 添加配置中心
                     configManager.addConfigCenter(cc);
                 });
+        // 启动
         startConfigCenter();
     }
 
@@ -812,7 +816,9 @@ public class DubboBootstrap extends GenericEventListener {
             if (!configCenter.checkOrUpdateInited()) {
                 return null;
             }
+            // 连接注册中心 getDynamicConfiguration()
             DynamicConfiguration dynamicConfiguration = getDynamicConfiguration(configCenter.toUrl());
+            // 动态配置中心启动完成.
             String configContent = dynamicConfiguration.getProperties(configCenter.getConfigFile(), configCenter.getGroup());
 
             String appGroup = getApplication().getName();

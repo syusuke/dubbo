@@ -218,8 +218,13 @@ public interface DynamicConfiguration extends Configuration, AutoCloseable {
      * @since 2.7.5
      */
     static DynamicConfiguration getDynamicConfiguration(URL connectionURL) {
+        // 通过SPI获取 org.apache.dubbo.common.config.configcenter.DynamicConfigurationFactory 的实例.
         String protocol = connectionURL.getProtocol();
+        // zookeeper 在 dubbo 的 SPI 中定义了
+        // 如: org.apache.dubbo.configcenter.support.zookeeper.ZookeeperDynamicConfigurationFactory
         DynamicConfigurationFactory factory = getDynamicConfigurationFactory(protocol);
+        // 调用 实现类中的 如:  org.apache.dubbo.common.config.configcenter.AbstractDynamicConfigurationFactory
+        // @see org.apache.dubbo.common.config.configcenter.AbstractDynamicConfigurationFactory.createDynamicConfiguration
         return factory.getDynamicConfiguration(connectionURL);
     }
 
