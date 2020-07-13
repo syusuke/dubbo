@@ -16,9 +16,19 @@
  */
 package org.apache.dubbo.demo;
 
+import java.time.LocalDateTime;
+
 /**
  *
  */
 public interface GreetingService {
     String hello();
+
+    Object call();
+
+    int getAge();
+
+    LocalDateTime getTime(String input);
+
+    LocalDateTime getTime(int input);
 }

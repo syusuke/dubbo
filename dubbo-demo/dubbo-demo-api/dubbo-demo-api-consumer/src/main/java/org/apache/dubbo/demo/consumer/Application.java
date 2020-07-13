@@ -50,7 +50,9 @@ public class Application {
                 .reference(greetingReference)
                 .start();
 
-        String message = ReferenceConfigCache.getCache().get(reference).sayHello("dubbo");
+        final DemoService demoService = ReferenceConfigCache.getCache().get(reference);
+        System.out.println(demoService.getClass());
+        String message = demoService.sayHello("dubbo");
         System.out.println(message);
 
         final GreetingService greetingService = ReferenceConfigCache.getCache().get(greetingReference);

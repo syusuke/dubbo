@@ -19,4 +19,24 @@ public class GreetingServiceImpl implements GreetingService {
         logger.info("hello. ");
         return " say " + LocalDateTime.now();
     }
+
+    @Override
+    public Object call() {
+        return null;
+    }
+
+    @Override
+    public int getAge() {
+        return 0;
+    }
+
+    @Override
+    public LocalDateTime getTime(String input) {
+        return null;
+    }
+
+    @Override
+    public LocalDateTime getTime(int input) {
+        return null;
+    }
 }

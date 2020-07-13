@@ -255,6 +255,8 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
         ServiceRepository repository = ApplicationModel.getServiceRepository();
         ServiceDescriptor serviceDescriptor = repository.registerService(interfaceClass);
+
+        // 浪费消息者
         repository.registerConsumer(
                 serviceMetadata.getServiceKey(),
                 attributes,
